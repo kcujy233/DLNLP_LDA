@@ -3,8 +3,56 @@ import re
 import math
 import time
 import jieba
+import pandas as pd
+import numpy as np
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.decomposition import LatentDirichletAllocation
 
-def stopwordslst(addr):#获得停词表
+def top_words_data_frame(model: LatentDirichletAllocation,
+                         tf_idf_vectorizer: TfidfVectorizer,
+                         n_top_words: int) -> pd.DataFrame:
+    '''
+    求出每个主题的前 n_top_words 个词
+
+    Parameters
+    ----------
+    model : sklearn 的 LatentDirichletAllocation 
+    tf_idf_vectorizer : sklearn 的 TfidfVectorizer
+    n_top_words :前 n_top_words 个主题词
+
+    Return
+    ------
+    DataFrame: 包含主题词分布情况
+    '''
+    rows = []
+    feature_names = tf_idf_vectorizer.get_feature_names_out()
+    for topic in model.components_:
+        top_words = [feature_names[i]
+                     for i in topic.argsort()[:-n_top_words - 1:-1]]
+        rows.append(top_words)
+    columns = [f'topic word {i+1}' for i in range(n_top_words)]
+    df = pd.DataFrame(rows, columns=columns)
+
+    return df
+def predict_to_data_frame(model: LatentDirichletAllocation, X: np.ndarray) -> pd.DataFrame:
+    '''
+    求出文档主题概率分布情况
+
+    Parameters
+    ----------
+    model : sklearn 的 LatentDirichletAllocation 
+    X : 词向量矩阵
+
+    Return
+    ------
+    DataFrame: 包含主题词分布情况
+    '''
+    matrix = model.transform(X)
+    columns = [f'P(topic {i+1})' for i in range(len(model.components_))]
+    df = pd.DataFrame(matrix, columns=columns)
+    return df
+def stopwordslst(addr):#获得停词表，返回一个被‘|’隔开的str
     stop_sum = 0  # 总的中文字符数
     stop_num_dic = {}  # 存储中文字符和出现次数的字典
     with open(addr, "r", encoding='utf-8', errors='ignore') as file1:
@@ -22,7 +70,7 @@ start_time = time.time()
 '''得到停词表'''
 stopstr = stopwordslst("cn_stopwords.txt")
 print('停词表为：', stopstr)
-
+'''获得一个文本前para_num个符合字数大于500的段落，去除无用字符和停词，返回一个list以及列表的实际尺寸num，list的内容为num个字符串'''
 def words(txtfile, para_num):
     artic = []
     para = ''
@@ -45,7 +93,7 @@ def words(txtfile, para_num):
                     break
     del file
     return artic, num
-
+'''去除无用字符和停词，获得一个文本前para_num个符合分词数大于350的段落，返回一个list以及列表的实际尺寸num，list的内容为num个字符串，分词被空格隔开'''
 def fenci(txtfile, para_num):
     artic = []
     words = []
@@ -63,7 +111,7 @@ def fenci(txtfile, para_num):
                 para = re.sub(stopstr, '', para)
                 for x in jieba.cut(para):
                     words.append(x)
-                if len(words) >= 500:
+                if len(words) >= 350:
                     wordsstr = ' '.join(words)
                     artic.append(wordsstr)
                     num += 1
@@ -75,36 +123,53 @@ def fenci(txtfile, para_num):
     return artic, num
 
 
-'''不分词，将每个字独立看待进行运算'''
+'''不分词，将每个字独立看待'''
 filepath = './ch/'#需要遍历的文件夹
-word_num = 0
-wordlst = ''#最终将所有中文放到一个str里
-char_sum = 0#记录总字符数，包括停词以及非中文字符
-words_sum = 0#记录除了停词表中意外的字符出现个数
-txt_num = 16
+txt_num = 10
+para_sum = 200
 artic_para = []
 for root, path, fil in os.walk(filepath):
     for txt_file in fil:
-        words(root+txt_file, 10)
-        fenci(root+txt_file, 10)
+        para_num = round(para_sum/txt_num)
+        # artic,num = words(root+txt_file, para_num)
+        artic,num = fenci(root+txt_file, para_num)
+        print('文件名称为：%s，获得的段落数为：%d'%(txt_file, num))
+        para_sum -= num
+        txt_num -= 1
 
+        #使用tf_idf方法
+        tf_idf_vectorizer = TfidfVectorizer()
+        tf_idf = tf_idf_vectorizer.fit_transform(artic)
+        # feature_names = tf_idf_vectorizer.get_feature_names_out()
+        # matric = tf_idf.toarray()
+        # df = pd.DataFrame(matric, columns=feature_names)
+        # print(df)
+        # #构造词频特征实例化
+        # count_vectorizer = CountVectorizer()
+        # cv = count_vectorizer.fit_transform(artic)
+        # feature_names = count_vectorizer.get_feature_names_out()
+        # matric = cv.toarray()
+        # df = pd.DataFrame(matric, columns=feature_names)
+        # print(df)
+        topic_num = 2
+        lda = LatentDirichletAllocation(
+            n_components=topic_num, max_iter=50,
+            learning_method='online',
+            learning_offset=50,
+            random_state=0)
+        lda.fit(tf_idf)
+        print(lda)
+        top_words_df = top_words_data_frame(lda, tf_idf_vectorizer, 10)
+        print(top_words_df)
 
-'''应用分词后的结果'''
-words_lst = []
-words_sum = 0#记录除了停词表中意外的字符出现个数
-for root, path, fil in os.walk(filepath):
-    for txt_file in fil:
-        # if txt_file != spe:#用来进行特定文章查找，全部遍历请删除这个条件判断
-        #     continue
-        with open(root+txt_file, "r", encoding='ANSI', errors='ignore') as file:
-            fp = file.readlines()
-            for line in fp:
-                line = line.replace('\n', '')
-                line = line.replace(' ', '')
-                line = line.replace('　　', '')
-                line = line.replace('\t', '')
-                wordstr = re.sub(stopstr, '', line)
-                for x in jieba.cut(wordstr):
-                    words_lst.append(x)
-                    words_sum += 1
-print('分词后的词组总数为： ', words_sum)
+        X = tf_idf.toarray()
+        predict_df = predict_to_data_frame(lda, X)
+        print(predict_df)
+#构造模型
+topic_num = 2
+lda = LatentDirichletAllocation(
+    n_components=topic_num, max_iter=50,
+    learning_method='online',
+    learning_offset=50,
+    random_state=0)
+
