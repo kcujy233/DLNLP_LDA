@@ -155,7 +155,7 @@ for root, path, fil in os.walk(filepath):
     # print(df)
     # #构造词频特征实例化
     # count_vectorizer = CountVectorizer()
-    # cv = count_vectorizer.fit_transform(artic)
+    # cv = count_vectorizer.fit_transform(artic_para)
     # feature_names = count_vectorizer.get_feature_names_out()
     # matric = cv.toarray()
     # df = pd.DataFrame(matric, columns=feature_names)
@@ -165,19 +165,22 @@ for root, path, fil in os.walk(filepath):
         n_components=topic_num, max_iter=200,
         learning_method='online',
         learning_offset=50,
-        random_state=0)
-        # batch_size=2)
+        random_state=0,
+        batch_size=4)
     lda.fit(tf_idf)
-    # print(lda)
-    top_words_df = top_words_data_frame(lda, tf_idf_vectorizer, 10)
+    # lda.fit(cv)
+    top_words_df = top_words_data_frame(lda, tf_idf_vectorizer, 20)
+    # top_words_df = top_words_data_frame(lda, count_vectorizer, 20)
     print(top_words_df)
     top_words_df.to_csv(top_words_csv_path, encoding='utf-8-sig', index=None)
     X = tf_idf.toarray()
+    # X = cv.toarray()
     predict_df = predict_to_data_frame(lda, X)
     print(predict_df)
     predict_df.to_csv(predict_topic_csv_path, encoding='utf-8-sig', index=None)
-    data = pyLDAvis.sklearn.prepare(lda, tf_idf, tf_idf_vectorizer)
-    # data = pyLDAvis.sklearn.prepare(lda, tf_idf, tf_idf_vectorizer, mds='mmds')
+    # data = pyLDAvis.sklearn.prepare(lda, cv, count_vectorizer,mds='mmds')
+    # data = pyLDAvis.sklearn.prepare(lda, tf_idf, tf_idf_vectorizer)
+    data = pyLDAvis.sklearn.prepare(lda, tf_idf, tf_idf_vectorizer, mds='mmds')
     pyLDAvis.save_html(data, html_path)
     break
     
