@@ -129,8 +129,8 @@ def fenci(txtfile, para_num):
     del file
     return artic, num
 
-filepath = './ch2/'#需要遍历的文件夹
-txt_num = 2#文章个数
+filepath = './ch/'#需要遍历的文件夹
+txt_num = 10#文章个数
 para_sum = 200#需要的段落数
 artic_para = []
 # 输出主题词的文件路径
@@ -171,17 +171,16 @@ for root, path, fil in os.walk(filepath):
     # df = pd.DataFrame(matric, columns=feature_names)
     # df.to_csv('词频数据——单一向.csv', encoding='utf-8-sig')
     # print(df)
-    topic_num = 2
+    topic_num = 10
     lda = LatentDirichletAllocation(
-        n_components=topic_num, max_iter=50,
+        n_components=topic_num, max_iter=10,
         learning_method='online',
         learning_offset=50,
         random_state=0)
-        # batch_size=2)
     lda.fit(tf_idf)
     # lda.fit(cv)
     top_words_df = top_words_data_frame(lda, tf_idf_vectorizer, 10)
-    # top_words_df = top_words_data_frame(lda, count_vectorizer, 20)
+    # top_words_df = top_words_data_frame(lda, count_vectorizer, 10)
     top_words_df.to_csv(top_words_csv_path, encoding='utf-8-sig', index=None)
     X = tf_idf.toarray()
     # X = cv.toarray()
@@ -193,8 +192,8 @@ for root, path, fil in os.walk(filepath):
     print("分类准确率：", accuracy)
     predict_df.to_csv(predict_topic_csv_path, encoding='utf-8-sig', index=None)
     # data = pyLDAvis.sklearn.prepare(lda, cv, count_vectorizer,mds='mmds')
-    data = pyLDAvis.sklearn.prepare(lda, tf_idf, tf_idf_vectorizer)
-    # data = pyLDAvis.sklearn.prepare(lda, tf_idf, tf_idf_vectorizer, mds='mmds')
+    # data = pyLDAvis.sklearn.prepare(lda, tf_idf, tf_idf_vectorizer)
+    data = pyLDAvis.sklearn.prepare(lda, tf_idf, tf_idf_vectorizer, mds='mmds')
     pyLDAvis.save_html(data, html_path)
     break
     
