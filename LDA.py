@@ -14,19 +14,6 @@ from sklearn.metrics import accuracy_score
 def top_words_data_frame(model: LatentDirichletAllocation,
                          tf_idf_vectorizer: TfidfVectorizer,
                          n_top_words: int) -> pd.DataFrame:
-    '''
-    求出每个主题的前 n_top_words 个词
-
-    Parameters
-    ----------
-    model : sklearn 的 LatentDirichletAllocation 
-    tf_idf_vectorizer : sklearn 的 TfidfVectorizer
-    n_top_words :前 n_top_words 个主题词
-
-    Return
-    ------
-    DataFrame: 包含主题词分布情况
-    '''
     rows = []
     feature_names = tf_idf_vectorizer.get_feature_names_out()
     for topic in model.components_:
@@ -35,29 +22,16 @@ def top_words_data_frame(model: LatentDirichletAllocation,
         rows.append(top_words)
     columns = [f'topic word {i+1}' for i in range(n_top_words)]
     df = pd.DataFrame(rows, columns=columns)
-
     return df
 def predict_to_data_frame(model: LatentDirichletAllocation, X: np.ndarray) -> pd.DataFrame:
-    '''
-    求出文档主题概率分布情况
-
-    Parameters
-    ----------
-    model : sklearn 的 LatentDirichletAllocation 
-    X : 词向量矩阵
-
-    Return
-    ------
-    DataFrame: 包含主题词分布情况
-    '''
-    lst = []
+    prelst = []
     matrix = model.transform(X)
     for i in range(matrix.shape[0]):
         max_index = matrix[i].argmax()
-        lst.append(max_index)
+        prelst.append(max_index)
     columns = [f'P(topic {i+1})' for i in range(len(model.components_))]
     df = pd.DataFrame(matrix, columns=columns)
-    return df, lst
+    return df, prelst
 
 def stopwordslst(addr):#获得停词表，返回一个被‘|’隔开的str
     stop_sum = 0  # 总的中文字符数
@@ -73,7 +47,6 @@ def stopwordslst(addr):#获得停词表，返回一个被‘|’隔开的str
     dic_lst = list(stop_num_dic.keys())
     return '|'.join(dic_lst)
 
-start_time = time.time()
 '''得到停词表'''
 stopstr = stopwordslst("cn_stopwords.txt")
 print('停词表为：', stopstr)
@@ -144,8 +117,8 @@ for root, path, fil in os.walk(filepath):
     #将段落写入一个list
     for txt_file in fil:
         para_num = round(para_sum/txt_num)
-        # artic,num = words(root+txt_file, para_num)
-        artic,num = fenci(root+txt_file, para_num)
+        artic,num = words(root+txt_file, para_num)
+        # artic,num = fenci(root+txt_file, para_num)
         for i in range(num):
             labels.append(lb)
         print('文件名称为：%s，获得的段落数为：%d'%(txt_file, num))
@@ -184,7 +157,6 @@ for root, path, fil in os.walk(filepath):
     top_words_df.to_csv(top_words_csv_path, encoding='utf-8-sig', index=None)
     X = tf_idf.toarray()
     # X = cv.toarray()
-    print(X.shape)
     predict_df, gen_labels = predict_to_data_frame(lda, X)
     print('真实标签：', labels)
     print('生成的标签：', gen_labels)
@@ -206,16 +178,3 @@ for root, path, fil in os.walk(filepath):
 # os.system('clear')
 # 浏览器打开 html 文件以查看可视化结果
 # os.system(f'start {html_path}')
-
-# print('本次生成了文件：',
-#       top_words_csv_path,
-#       predict_topic_csv_path,
-#       html_path)
-#构造模型
-# topic_num = 2
-# lda = LatentDirichletAllocation(
-#     n_components=topic_num, max_iter=50,
-#     learning_method='online',
-#     learning_offset=50,
-#     random_state=0)
-

@@ -1,7 +1,4 @@
 import numpy as np
-import nltk
-from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
 from gensim.corpora import Dictionary
 from gensim.models import LdaModel
 import os
