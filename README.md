@@ -4,10 +4,10 @@
 使用语言：python 3.9
 
 安装以及使用的库：
-os
-re
-jieba
-pandas
-numpy
-sklearn
+os, 
+re, 
+jieba,  
+pandas, 
+numpy,  
+sklearn,  
 pyLDAvis
