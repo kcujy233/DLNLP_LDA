@@ -65,8 +65,10 @@ def words(txtfile, para_num):
             if line[-1] == '\n':
                 para = para[:-1]
                 para = re.sub(stopstr, '', para)
+                parastr = ' '.join(para)
                 if len(para) >= 500:
-                    artic.append(para)
+                    artic.append(parastr)
+                    parastr = ''
                     num += 1
                 para = ''
                 if num == para_num:
@@ -117,8 +119,8 @@ for root, path, fil in os.walk(filepath):
     #将段落写入一个list
     for txt_file in fil:
         para_num = round(para_sum/txt_num)
-        artic,num = words(root+txt_file, para_num)
-        # artic,num = fenci(root+txt_file, para_num)
+        # artic,num = words(root+txt_file, para_num)
+        artic,num = fenci(root+txt_file, para_num)
         for i in range(num):
             labels.append(lb)
         print('文件名称为：%s，获得的段落数为：%d'%(txt_file, num))
@@ -138,13 +140,14 @@ for root, path, fil in os.walk(filepath):
     # print(df)
     #构造词频特征实例化
     # count_vectorizer = CountVectorizer()
+    # count_vectorizer = CountVectorizer(analyzer='char')
     # cv = count_vectorizer.fit_transform(artic_para)
     # feature_names = count_vectorizer.get_feature_names_out()
     # matric = cv.toarray()
     # df = pd.DataFrame(matric, columns=feature_names)
     # df.to_csv('词频数据——单一向.csv', encoding='utf-8-sig')
     # print(df)
-    topic_num = 10
+    topic_num = 8
     lda = LatentDirichletAllocation(
         n_components=topic_num, max_iter=10,
         learning_method='online',
@@ -165,8 +168,8 @@ for root, path, fil in os.walk(filepath):
     predict_df.to_csv(predict_topic_csv_path, encoding='utf-8-sig', index=None)
     # data = pyLDAvis.sklearn.prepare(lda, cv, count_vectorizer,mds='mmds')
     # data = pyLDAvis.sklearn.prepare(lda, tf_idf, tf_idf_vectorizer)
-    data = pyLDAvis.sklearn.prepare(lda, tf_idf, tf_idf_vectorizer, mds='mmds')
-    pyLDAvis.save_html(data, html_path)
+    # data = pyLDAvis.sklearn.prepare(lda, tf_idf, tf_idf_vectorizer, mds='mmds')
+    # pyLDAvis.save_html(data, html_path)
     break
     
 
