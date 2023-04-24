@@ -11,11 +11,11 @@ import pyLDAvis.sklearn
 from sklearn.metrics import accuracy_score
 
 class LDA_DATA():
-    def __init__(self, filepath, txtnum, stop_addr, parasum=200) -> None:
+    def __init__(self, filepath, txtnum, parasum=200) -> None:
         self.filepath = filepath
         self.txtnum = txtnum
         self.parasum = parasum
-        self.stop_addr = stop_addr
+        self.stop_addr = "cn_stopwords.txt"
         self.para_num = 0
         self.words_stop = ''
         self.truelabels = []
@@ -117,7 +117,6 @@ class LDA_DATA():
                 lb += 1
         print('最后的总段落数为：', len(self.artic_para))
         return self.artic_para, self.truelabels
-            
 
 def top_words_data_frame(model: LatentDirichletAllocation,
                          tf_idf_vectorizer: TfidfVectorizer,
@@ -141,7 +140,6 @@ def predict_to_data_frame(model: LatentDirichletAllocation, X: np.ndarray) -> pd
     df = pd.DataFrame(matrix, columns=columns)
     return df, prelst
 
-#使用tf_idf方法
 def TF_IDF(ldainput, topic_num, iternum, top_words_csv_path, predict_topic_csv_path, html_path):
     tf_idf_vectorizer = TfidfVectorizer()
     # tf_idf_vectorizer = TfidfVectorizer(analyzer='char')
@@ -166,7 +164,6 @@ def TF_IDF(ldainput, topic_num, iternum, top_words_csv_path, predict_topic_csv_p
     pyLDAvis.save_html(data, html_path)
     return gen_labels
 
-
 def CV(ldainput, topic_num, iternum, top_words_csv_path, predict_topic_csv_path, html_path):
     count_vectorizer = CountVectorizer()
     # count_vectorizer = CountVectorizer(analyzer='char')
@@ -175,7 +172,6 @@ def CV(ldainput, topic_num, iternum, top_words_csv_path, predict_topic_csv_path,
     # matric = cv.toarray()
     # df = pd.DataFrame(matric, columns=feature_names)
     # df.to_csv('词频数据——单一向.csv', encoding='utf-8-sig')
-
     lda = LatentDirichletAllocation(
         n_components=topic_num, max_iter=iternum,
         learning_method='online',
@@ -191,25 +187,23 @@ def CV(ldainput, topic_num, iternum, top_words_csv_path, predict_topic_csv_path,
     pyLDAvis.save_html(data, html_path)
     return gen_labels
 
-
 if __name__ == '__main__':
     filepath = './ch/'#需要遍历的文件夹
     txt_num = 10#文章个数
     para_sum = 200#需要的段落数
     stop_addr = "cn_stopwords.txt"#停词表文件
-    ldadata = LDA_DATA(filepath,txt_num,stop_addr,para_sum)
+    ldadata = LDA_DATA(filepath, txt_num, para_sum)
     ldadata.stopwordslst()
     lda_artic, lda_labels = ldadata.data_load_fenci()
     # lda_artic, lda_labels = ldadata.data_load_words()
 
-    
     top_words_csv_path = 'top-topic-words.csv'# 输出主题词的文件路径
     predict_topic_csv_path = 'words-distribution.csv'# 输出各文档所属主题的文件路径
     html_path = 'visiual.html'#输出html文件
     topic_num = 10#主题数
     iter_num = 10#迭代次数
-    # gen_labels = TF_IDF(lda_artic, topic_num, iter_num, top_words_csv_path, predict_topic_csv_path, html_path)
-    gen_labels = CV(lda_artic, topic_num, iter_num, top_words_csv_path, predict_topic_csv_path, html_path)
+    gen_labels = TF_IDF(lda_artic, topic_num, iter_num, top_words_csv_path, predict_topic_csv_path, html_path)
+    # gen_labels = CV(lda_artic, topic_num, iter_num, top_words_csv_path, predict_topic_csv_path, html_path)
 
     print('真实标签：', lda_labels)
     print('生成的标签：', gen_labels)
