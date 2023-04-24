@@ -1,6 +1,5 @@
 import os
 import re
-import time
 import jieba
 import pandas as pd
 import numpy as np
