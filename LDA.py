@@ -147,7 +147,7 @@ for root, path, fil in os.walk(filepath):
     # df = pd.DataFrame(matric, columns=feature_names)
     # df.to_csv('词频数据——单一向.csv', encoding='utf-8-sig')
     # print(df)
-    topic_num = 8
+    topic_num = 10
     lda = LatentDirichletAllocation(
         n_components=topic_num, max_iter=10,
         learning_method='online',
@@ -172,12 +172,3 @@ for root, path, fil in os.walk(filepath):
     # pyLDAvis.save_html(data, html_path)
     break
     
-
-#可视化
-# 使用 pyLDAvis 进行可视化
-# data = pyLDAvis.sklearn.prepare(lda, tf_idf, tf_idf_vectorizer)
-# pyLDAvis.save_html(data, html_path)
-# 清屏
-# os.system('clear')
-# 浏览器打开 html 文件以查看可视化结果
-# os.system(f'start {html_path}')
